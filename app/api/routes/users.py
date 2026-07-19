@@ -31,10 +31,17 @@ def get_user(user_id:int):
 
 
 
-@router.post("/",response_model=UserResponse,status_code=status.HTTP_201_CREATED)
+# @router.post("/",response_model=UserResponse,status_code=status.HTTP_201_CREATED)
+# def create_user(user:UserCreate):
+#     return {
+#         "id":1,
+#         "name":user.name,
+#         "email":user.email
+#     }
+
+@router.post("/",status_code=status.HTTP_201_CREATED)
 def create_user(user:UserCreate):
-    return {
-        "id":1,
-        "name":user.name,
-        "email":user.email
+    return{
+        "message":"User created successfully",
+        "user":user
     }
