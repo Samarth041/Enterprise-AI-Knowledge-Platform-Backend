@@ -1,0 +1,9 @@
+# FastAPI
+fastapi
+uvicorn[standard]
+
+# Validation and Settings
+pydantic
+pydantic-settings
+python-dotenv
+email-validator
