@@ -74,3 +74,20 @@ def delete_user(id:int):
         status_code=status.HTTP_404_NOT_FOUND,
         detail="User not found"
     )
+
+#update
+
+@router.put("/{id}",response_model=UserResponse)
+def update_user(id:int,updated_user:UserCreate):
+    for user in fake_db:
+
+        if user["id"]==id:
+            user["name"]=updated_user.name
+            user["email"]=updated_user.email
+            user["age"]=updated_user.age
+            return user
+
+    raise HTTPException(
+        status_code=status.HTTP_404_NOT_FOUND,
+        detail="User not found"
+    )
