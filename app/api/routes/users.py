@@ -11,34 +11,34 @@ fake_db=[]
 
 
 #routing
+#get all users
 @router.get("/",response_model=list[UserResponse])
-def get_users(min_age:Optional[int]=None):
-    if min_age is None:
-        return fake_db
+def get_users(db:Session=Depends(get_db)):
+    stmt=select(User)
+    result=db.execute(stmt)
+    users=result.scalars().all()
+    return users
 
-    filtered_users=[]
 
-    for user in fake_db:
-        if user["age"]>=min_age:
-            filtered_users.append(user)
-
-    return filtered_users
-
+#get user by id
 @router.get("/{user_id}",response_model=UserResponse)
-def get_user(user_id:int):
-    for user in fake_db:
-        if user["id"]==user_id:
-            return user
+def get_user(user_id:int,db:Session=Depends(get_db)):
+    pass
+    stmt=select(User).where(User.id==user_id)
+    result=db.execute(stmt)
+    user=result.scalar_one_or_none()
+    if user is None:
+        raise HTTPException(
+            status_code=404,
+            detail="User not found"
+        )
 
-    raise HTTP_201_CREATED(
-        status_code=status.HTTTP_404_NOT_FOUND,
-        detail="User not found"
-    )
+    return user
     
 
 
 
-
+#create user
 @router.post("/",status_code=status.HTTP_201_CREATED,response_model=UserResponse)
 def create_user(user:UserCreate,db:Session=Depends(get_db)):
     db_user=User(
@@ -51,40 +51,39 @@ def create_user(user:UserCreate,db:Session=Depends(get_db)):
     db.refresh(db_user)
     return db_user
 
-# @router.post("/",status_code=status.HTTP_201_CREATED)
-# def create_user(user:UserCreate):
-#     return{
-#         "message":"User created successfully",
-#         "user":user
-#     }
+
 
 #delete user
+@router.delete("/{user_id}",status_code=status.HTTP_204_NO_CONTENT)
+def delete_user(user_id:int,db:Session=Depends(get_db)):
+    stmt=select(User).where(User.id==user_id)
+    user=db.execute(stmt).scalar_one_or_none()
+    if user is None:
+        raise HTTPException(
+            status_code=404,
+            detail="User not found"
+        )
 
-@router.delete("/{id}",status_code=status.HTTP_200_OK)
-def delete_user(id:int):
-    for index,user in enumerate(fake_db):
-        if user["id"]==id:
-            fake_db.pop(index)
-            return {"message":"User deleted successfully"}
+    db.delete(user)
+    db.commit()
 
-    raise HTTPException(
-        status_code=status.HTTP_404_NOT_FOUND,
-        detail="User not found"
-    )
+#update user details
 
-#update
+@router.put("/{user_id}",response_model=UserResponse)
+def update_user(user_id:int,updated_user:UserCreate,db:Session=Depends(get_db)):
+    stmt=select(User).where(User.id==user_id)
+    user=db.execute(stmt).scalar_one_or_none()
 
-@router.put("/{id}",response_model=UserResponse)
-def update_user(id:int,updated_user:UserCreate):
-    for user in fake_db:
+    if user is None:
+        raise HTTPException(
+            status_code=404,
+            detail="User not found"
+        )
 
-        if user["id"]==id:
-            user["name"]=updated_user.name
-            user["email"]=updated_user.email
-            user["age"]=updated_user.age
-            return user
+    user.name=updated_user.name
+    user.email=updated_user.email
+    user.age=updated_user.age
 
-    raise HTTPException(
-        status_code=status.HTTP_404_NOT_FOUND,
-        detail="User not found"
-    )
+    db.commit()
+    db.refresh(user)
+    return user
