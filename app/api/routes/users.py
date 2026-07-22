@@ -1,6 +1,10 @@
-from fastapi import APIRouter,status,HTTPException
+from fastapi import APIRouter,status,HTTPException,Depends
 from app.schemas.user import UserCreate,UserResponse
 from typing import Optional
+from sqlalchemy.orm import Session
+from app.db.database import get_db
+from app.models.user import User
+from sqlalchemy import select
 
 router=APIRouter(prefix="/users",tags=["Users"])
 fake_db=[]
@@ -35,24 +39,17 @@ def get_user(user_id:int):
 
 
 
-@router.post("/",response_model=UserResponse,status_code=status.HTTP_201_CREATED)
-def create_user(user:UserCreate):
-    #generate a unique id
-    user_id=len(fake_db)+1
-
-    #create a dictionary representing the new user
-    new_user={
-        "id":user_id,
-        "name":user.name,
-        "email":user.email,
-        "age":user.age
-    }
-
-    #store the user in the fake db
-    fake_db.append(new_user)
-
-    return new_user
- 
+@router.post("/",status_code=status.HTTP_201_CREATED,response_model=UserResponse)
+def create_user(user:UserCreate,db:Session=Depends(get_db)):
+    db_user=User(
+        name=user.name,
+        email=user.email,
+        age=user.age
+    )
+    db.add(db_user)
+    db.commit()
+    db.refresh(db_user)
+    return db_user
 
 # @router.post("/",status_code=status.HTTP_201_CREATED)
 # def create_user(user:UserCreate):

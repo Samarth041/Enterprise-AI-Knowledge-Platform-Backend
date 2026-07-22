@@ -1,4 +1,4 @@
-from pydantic import BaseModel, EmailStr,Field
+from pydantic import BaseModel, EmailStr,Field,ConfigDict
 
 class UserCreate(BaseModel):
     name:str=Field(
@@ -18,4 +18,6 @@ class UserResponse(BaseModel):
     name:str
     email:EmailStr
     age:int
+
+    model_config=ConfigDict(from_attributes=True)
 
