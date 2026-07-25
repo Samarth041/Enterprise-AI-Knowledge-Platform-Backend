@@ -22,11 +22,14 @@ def create_user(db: Session, user: UserCreate):
 #get all users
 def get_users(
     db:Session,
-    min_age: int | None=None
+    min_age: int | None=None,
+    name: str | None=None
 ):
     stmt=select(User)
     if min_age is not None:
         stmt=stmt.where(User.age>=min_age)
+    if name is not None:
+        stmt=stmt.where(User.name==name)
     result=db.execute(stmt)
     users=result.scalars().all()
     return users
