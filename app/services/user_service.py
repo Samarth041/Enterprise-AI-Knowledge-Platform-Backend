@@ -36,6 +36,13 @@ def get_user(db:Session,user_id:int):
             status_code=404,
             detail="User not found"
         )
+    
+    for post in user.posts:
+        print(post.id)
+        print(post.title)
+        print(post.content)
+        print(post.user_id)
+        print("-----------")
 
     return user
 

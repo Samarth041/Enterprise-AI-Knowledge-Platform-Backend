@@ -1,6 +1,6 @@
 from sqlalchemy import Column, Integer, String
 from sqlalchemy.orm import relationship, Mapped,mapped_column
-
+from sqlalchemy.orm import relationship
 from app.db.database import Base
 
 class User(Base):
@@ -23,4 +23,10 @@ class User(Base):
     age:Mapped[int]=mapped_column(
         Integer,
         nullable=False
+    )
+
+
+    #relationship extablishment b/w user and post
+    posts:Mapped[list["Post"]]=relationship(
+        back_populates="user"
     )

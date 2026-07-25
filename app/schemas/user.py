@@ -1,5 +1,5 @@
 from pydantic import BaseModel, EmailStr,Field,ConfigDict
-
+from app.schemas.post import PostSimpleResponse
 class UserCreate(BaseModel):
     name:str=Field(
         min_length=2,
@@ -18,6 +18,7 @@ class UserResponse(BaseModel):
     name:str
     email:EmailStr
     age:int
+    posts:list[PostSimpleResponse]= Field(default_factory=list)
 
     model_config=ConfigDict(from_attributes=True)
 
