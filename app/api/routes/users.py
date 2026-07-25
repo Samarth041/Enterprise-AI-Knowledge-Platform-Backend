@@ -18,8 +18,11 @@ router=APIRouter(prefix="/users",tags=["Users"])
 #routing
 #get all users
 @router.get("/",response_model=list[UserResponse])
-def get_users(db:Session=Depends(get_db)):
-    return get_users_service(db)
+def get_users(
+    min_age:int | None=None,
+    db:Session=Depends(get_db)
+):
+    return get_users_service(db,min_age)
 
 
 #get user by id

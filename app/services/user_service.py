@@ -1,4 +1,4 @@
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session,selectinload
 from app.models.user import User
 from sqlalchemy import select
 from fastapi import HTTPException
@@ -20,15 +20,24 @@ def create_user(db: Session, user: UserCreate):
 
 
 #get all users
-def get_users(db:Session):
+def get_users(
+    db:Session,
+    min_age: int | None=None
+):
     stmt=select(User)
+    if min_age is not None:
+        stmt=stmt.where(User.age>=min_age)
     result=db.execute(stmt)
     users=result.scalars().all()
     return users
 
 #get user by id
 def get_user(db:Session,user_id:int):
-    stmt=select(User).where(User.id==user_id)
+    stmt=(
+        select(User)
+        .options(selectinload(User.posts)) #early loading
+        .where(User.id==user_id)
+    )
     result=db.execute(stmt)
     user=result.scalar_one_or_none()
     if user is None:
@@ -36,13 +45,6 @@ def get_user(db:Session,user_id:int):
             status_code=404,
             detail="User not found"
         )
-    
-    for post in user.posts:
-        print(post.id)
-        print(post.title)
-        print(post.content)
-        print(post.user_id)
-        print("-----------")
 
     return user
 
