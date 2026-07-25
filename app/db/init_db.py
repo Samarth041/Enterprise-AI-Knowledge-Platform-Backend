@@ -1,10 +1,10 @@
-from app.db.database import Base,engine
+# from app.db.database import Base,engine
 
-#Import all models so SQLAchemy knows about them
+# #Import all models so SQLAchemy knows about them
 
-from app.models.user import User
-from app.models.post import Post
+# from app.models.user import User
+# from app.models.post import Post
 
-Base.metadata.create_all(bind=engine)
+# Base.metadata.create_all(bind=engine)
 
-print("Database and tables created successfully.")
+# print("Database and tables created successfully.")

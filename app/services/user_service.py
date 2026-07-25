@@ -10,7 +10,8 @@ def create_user(db: Session, user: UserCreate):
     db_user=User(
         name=user.name,
         email=user.email,
-        age=user.age
+        age=user.age,
+        phone=user.phone
     )
 
     db.add(db_user)
@@ -71,6 +72,7 @@ def update_user(db:Session,user_id:int,updated_user:UserCreate):
     user.name=updated_user.name
     user.email=updated_user.email
     user.age=updated_user.age
+    user.phone = updated_user.phone
 
     db.commit()
     db.refresh(user)

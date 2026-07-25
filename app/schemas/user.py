@@ -13,11 +13,14 @@ class UserCreate(BaseModel):
         description="Age msut be b/w 18 and 100"
     )
 
+    phone:str|None=None
+
 class UserResponse(BaseModel):
     id:int
     name:str
     email:EmailStr
     age:int
+    phone:str|None=None
     posts:list[PostSimpleResponse]= Field(default_factory=list)
 
     model_config=ConfigDict(from_attributes=True)

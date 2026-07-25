@@ -25,6 +25,11 @@ class User(Base):
         nullable=False
     )
 
+    phone:Mapped[str]=mapped_column(
+        String(15),
+        nullable=True
+    )
+
 
     #relationship extablishment b/w user and post
     posts:Mapped[list["Post"]]=relationship(
