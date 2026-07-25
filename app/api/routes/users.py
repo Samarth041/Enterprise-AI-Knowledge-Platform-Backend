@@ -1,4 +1,4 @@
-from fastapi import APIRouter,status,HTTPException,Depends
+from fastapi import APIRouter,status,HTTPException,Depends,Query
 from app.schemas.user import UserCreate,UserResponse
 from typing import Optional
 from sqlalchemy.orm import Session
@@ -19,11 +19,13 @@ router=APIRouter(prefix="/users",tags=["Users"])
 #get all users
 @router.get("/",response_model=list[UserResponse])
 def get_users(
-    min_age:int | None=None,
-    name:str | None=None,
-    db:Session=Depends(get_db)
+    page: int = Query(1, ge=1),
+    limit: int = Query(10, ge=1, le=100),
+    min_age: int | None = Query(None, ge=0),
+    name: str | None = None,
+    db: Session = Depends(get_db)
 ):
-    return get_users_service(db,min_age,name)
+    return get_users_service(db,min_age,name,page,limit)
 
 
 #get user by id
