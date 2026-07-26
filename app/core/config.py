@@ -3,6 +3,9 @@ from pydantic_settings import BaseSettings
 class Settings(BaseSettings):
     app_name:str
     debug:bool
+    secret_key: str
+    algorithm: str
+    access_token_expire_minutes: int
 
     class Config:
         env_file=".env"

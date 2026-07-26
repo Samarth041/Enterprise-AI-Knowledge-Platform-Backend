@@ -7,3 +7,15 @@ pydantic
 pydantic-settings
 python-dotenv
 email-validator
+
+
+#authentication
+passlib[bcrypt]
+python-jose[cryptography]
+python-multipart
+bcrypt
+
+#database
+
+sqlalchemy
+alembic
