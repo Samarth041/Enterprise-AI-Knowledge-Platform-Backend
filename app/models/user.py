@@ -30,6 +30,11 @@ class User(Base):
         nullable=True
     )
 
+    hashed_password:Mapped[str]=mapped_column(
+        String(255),
+        nullable=False
+    )
+
 
     #relationship extablishment b/w user and post
     posts:Mapped[list["Post"]]=relationship(

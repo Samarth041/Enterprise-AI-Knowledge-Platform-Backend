@@ -2,11 +2,14 @@ from datetime import datetime, timedelta,timezone
 from jose import jwt,JWTError
 from passlib.context import CryptContext
 from app.core.config import settings
+from fastapi.security import OAuth2PasswordBearer
 
 pwd_context = CryptContext( #password hashing context
     schemes=["bcrypt"],
     deprecated="auto"
 )
+
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")
 
 
 #hashing password
