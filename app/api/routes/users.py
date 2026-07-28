@@ -10,9 +10,20 @@ from app.services.user_service import get_user as get_user_service
 from app.services.user_service import create_user as create_user_service
 from app.services.user_service import delete_user as delete_user_service
 from app.services.user_service import update_user as update_user_service
+from app.api.dependencies import get_current_user
+
 
 router=APIRouter(prefix="/users",tags=["Users"])
 #fake_db=[]
+
+#-----------------------------------------------------------------------------
+#------------------------------------------------------------------
+
+@router.get("/me",response_model=UserResponse)
+def read_current_user(current_user:User=Depends(get_current_user)):
+    return current_user
+
+
 
 
 #routing
@@ -52,5 +63,8 @@ def delete_user(user_id:int,db:Session=Depends(get_db)):
 @router.put("/{user_id}",response_model=UserResponse)
 def update_user(user_id:int,updated_user:UserCreate,db:Session=Depends(get_db)):
     return update_user_service(db,user_id,updated_user)
+
+
+
 
 

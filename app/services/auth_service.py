@@ -1,7 +1,7 @@
 from sqlalchemy.orm import Session
 from sqlalchemy import select
 from fastapi import HTTPException,status
-
+from fastapi.security import OAuth2PasswordRequestForm
 from app.models.user import User
 from app.schemas.auth import SignupRequest,LoginRequest,TokenResponse
 from app.core.security import hash_password,verify_password,create_access_token
@@ -38,9 +38,9 @@ def signup(db:Session,request:SignupRequest):
 
 #login service
 
-def login(db:Session,credentials:LoginRequest):
-    db_user=db.scalar( #db.scalar is used to get a first row from the result
-        select(User).where(User.email==credentials.email)
+def login(db: Session, form_data: OAuth2PasswordRequestForm):
+    db_user = db.scalar(
+        select(User).where(User.email == form_data.username)
     )
 
     if not db_user:
@@ -49,23 +49,20 @@ def login(db:Session,credentials:LoginRequest):
             detail="Invalid email or password"
         )
 
-    if not verify_password(credentials.password,db_user.hashed_password):
+    # 👇 Add these debug prints here
+    print("Password entered:", repr(form_data.password))
+    print("Stored hash:", db_user.hashed_password)
+
+    if not verify_password(form_data.password, db_user.hashed_password):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid email or password"
         )
 
-    #create access token
-    acess_token=create_access_token(
-        {
-            "sub":db_user.email
-        }
+    access_token = create_access_token(
+        {"sub": db_user.email}
     )
 
     return TokenResponse(
         access_token=access_token
     )
-
-
-
-
