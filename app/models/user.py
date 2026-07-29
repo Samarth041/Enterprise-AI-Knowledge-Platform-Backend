@@ -1,6 +1,5 @@
 from sqlalchemy import Column, Integer, String
 from sqlalchemy.orm import relationship, Mapped,mapped_column
-from sqlalchemy.orm import relationship
 from app.db.database import Base
 
 class User(Base):
@@ -35,8 +34,16 @@ class User(Base):
         nullable=False
     )
 
+    #RBAC role:- role based access control
+    role:Mapped[str]=mapped_column(
+        String(20),
+        default="user",
+        nullable=False
+    )
+
 
     #relationship extablishment b/w user and post
     posts:Mapped[list["Post"]]=relationship(
-        back_populates="user"
+        back_populates="user",
+        cascade="all,delete"
     )
