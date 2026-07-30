@@ -10,7 +10,7 @@ from app.services.user_service import get_user as get_user_service
 from app.services.user_service import create_user as create_user_service
 from app.services.user_service import delete_user as delete_user_service
 from app.services.user_service import update_user as update_user_service
-from app.api.dependencies import get_current_user
+from app.api.dependencies import get_current_user,require_admin
 
 
 router=APIRouter(prefix="/users",tags=["Users"])
@@ -55,7 +55,7 @@ def create_user(user:UserCreate,db:Session=Depends(get_db)):
 
 #delete user
 @router.delete("/{user_id}",status_code=status.HTTP_204_NO_CONTENT)
-def delete_user(user_id:int,db:Session=Depends(get_db)):
+def delete_user(user_id:int,db:Session=Depends(get_db),current_user:User=Depends(require_admin)):
     delete_user_service(db,user_id)
 
 #update user details
