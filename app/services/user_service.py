@@ -3,6 +3,7 @@ from app.models.user import User
 from sqlalchemy import select
 from fastapi import HTTPException
 from app.schemas.user import UserCreate
+from app.core.logging import logger
 
 
 #create user
@@ -17,6 +18,9 @@ def create_user(db: Session, user: UserCreate):
     db.add(db_user)
     db.commit()
     db.refresh(db_user)
+    logger.info(
+        f"User created :{db_user.email}"
+    )
     return db_user
 
 
@@ -50,6 +54,10 @@ def get_user(db:Session,user_id:int):
     result=db.execute(stmt)
     user=result.scalar_one_or_none()
     if user is None:
+
+        logger.warning(
+            f"User not found. ID={user_id}"
+        )
         raise HTTPException(
             status_code=404,
             detail="User not found"
@@ -76,6 +84,9 @@ def update_user(db:Session,user_id:int,updated_user:UserCreate):
 
     db.commit()
     db.refresh(user)
+    logger.info(
+        f"User updated . ID={user_id}"
+    )
     return user
 
 #delete user
@@ -87,6 +98,10 @@ def delete_user(db:Session,user_id:int):
             status_code=404,
             detail="User not found"
         )
+
+    logger.info(
+        f"User deleted. ID={user_id}"
+    )
 
     db.delete(user)
     db.commit()
