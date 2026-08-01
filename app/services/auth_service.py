@@ -58,7 +58,7 @@ def login(db: Session, form_data: OAuth2PasswordRequestForm):
     if not verify_password(form_data.password, db_user.hashed_password):
 
         logger.warning(
-            f"Invalid password for{db_user.email}"
+            f"Invalid password for {db_user.email}"
         )
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,

@@ -5,7 +5,7 @@ DATABASE_URL="sqlite:///./enterprise.db"
 
 engine=create_engine(
     DATABASE_URL,
-    echo=True
+    echo=False
 )
 
 SessionLocal=sessionmaker(autocommit=False,autoflush=False,bind=engine)
