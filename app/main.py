@@ -7,10 +7,12 @@ from app.core.exceptions import http_exception_handler,global_exception_handler
 from fastapi import HTTPException,Request
 import time
 from app.core.logging import logger
+from fastapi.middleware.cors import CORSMiddleware
 
 
 
 app=FastAPI(title=settings.APP_NAME )
+
 
 app.add_exception_handler(HTTPException,http_exception_handler)
 
@@ -36,6 +38,16 @@ async def log_requests(request:Request,call_next):
 
     response.headers["X-Process-Time"]=str(process_time)
     return response
+
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 
 #user router
 app.include_router(user_router)
