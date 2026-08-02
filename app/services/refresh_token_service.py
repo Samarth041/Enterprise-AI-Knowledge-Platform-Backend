@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta, timezone
 from sqlalchemy.orm import Session
-from sqlalchemy import select
+from sqlalchemy import select,update
 from app.schemas.auth import TokenResponse
 from app.models.refresh_token import RefreshToken
 from app.models.user import User
@@ -128,3 +128,52 @@ def logout(db:Session,refresh_token:str):
     return{
         "message":"Logged out successfully"
     }
+
+
+#-----------------------------------------------------------------------
+def logout_all_devices(db:Session,refresh_token:str):
+    #Step1: Validate refresh token
+    try:
+        payload=decode_refresh_token(refresh_token)
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or expired refresh token"
+        )
+
+    #step 2:get email
+    email=payload.get("sub")
+
+    if not email:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid refresh token"
+        )
+
+    #find user
+    user=db.scalar(
+        select(User).where(User.email==email)
+    )
+
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found"
+        )
+
+    #step 4:Revoke  every refresh token of this user
+
+    db.execute(
+        update(RefreshToken)
+        .where(RefreshToken.user_id==user.id)
+        .values(revoked=True)
+    )
+
+    #step 5:commit
+
+    db.commit()
+
+    return{
+        "message":"Logged out from all devices successfully"
+    }
+    

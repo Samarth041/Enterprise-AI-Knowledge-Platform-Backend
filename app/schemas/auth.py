@@ -30,4 +30,5 @@ class RefreshTokenRequest(BaseModel):
 class LogoutRequest(BaseModel):
     refresh_token:str
 
-    
+class LogoutAllRequest(BaseModel):
+    refresh_token:str #we only need one refresh token to identify the user 

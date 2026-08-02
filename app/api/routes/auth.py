@@ -5,8 +5,10 @@ from app.db.database import get_db
 from app.schemas.auth import SignupRequest,LoginRequest,TokenResponse
 from app.services.auth_service import signup,login
 from app.schemas.user import UserResponse
-from app.services.refresh_token_service import refresh_access_token,logout
-from app.schemas.auth import RefreshTokenRequest,SignupRequest,LoginRequest,TokenResponse,LogoutRequest
+from app.services.refresh_token_service import refresh_access_token,logout,logout_all_devices
+from app.schemas.auth import RefreshTokenRequest,SignupRequest,LoginRequest,TokenResponse,LogoutRequest,LogoutAllRequest
+
+
 
 router=APIRouter(
     prefix="/auth",
@@ -31,3 +33,15 @@ def refresh(request:RefreshTokenRequest,db:Session=Depends(get_db)):
 @router.post("/logout")
 def logout_user(request:LogoutRequest,db:Session=Depends(get_db)):
     return logout(db,request.refresh_token)
+
+
+@router.post("/logout-all")
+def logout_all(
+    request:LogoutAllRequest,
+    db:Session=Depends(get_db)
+):
+    return logout_all_devices(db,request.refresh_token)
+
+
+
+
