@@ -8,11 +8,15 @@ from fastapi import HTTPException,Request
 import time
 from app.core.logging import logger
 from fastapi.middleware.cors import CORSMiddleware
-
+from app.core.scheduler import start_scheduler
 
 
 app=FastAPI(title=settings.APP_NAME )
 
+
+@app.on_event("startup")
+def startup():
+    start_scheduler()
 
 app.add_exception_handler(HTTPException,http_exception_handler)
 

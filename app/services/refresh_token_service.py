@@ -1,11 +1,12 @@
 from datetime import datetime, timedelta, timezone
 from sqlalchemy.orm import Session
-from sqlalchemy import select,update
+from sqlalchemy import select,update,delete
 from app.schemas.auth import TokenResponse
 from app.models.refresh_token import RefreshToken
 from app.models.user import User
 from app.core.security import create_refresh_token, hash_refresh_token,decode_refresh_token,create_access_token
 from app.core.config import settings
+from app.core.logging import logger
 
 
 def create_user_refresh_token(db:Session,user:User)->str:
@@ -176,4 +177,19 @@ def logout_all_devices(db:Session,refresh_token:str):
     return{
         "message":"Logged out from all devices successfully"
     }
+
+
+#cleaning up expired refresh tokens
+def cleanup_expired_refresh_tokens(db:Session):
+    result = db.execute(
+        delete(RefreshToken).where(
+            (RefreshToken.expires_at < datetime.now()) |
+            (RefreshToken.revoked == True)
+        )
+    )
     
+    db.commit()
+
+    logger.info(
+        f"Deleted {result.rowcount} expired/revoked refresh tokens"
+    )
