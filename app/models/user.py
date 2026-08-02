@@ -1,6 +1,7 @@
 from sqlalchemy import Column, Integer, String
 from sqlalchemy.orm import relationship, Mapped,mapped_column
 from app.db.database import Base
+from app.models.refresh_token import RefreshToken
 
 class User(Base):
     __tablename__="users"
@@ -46,4 +47,9 @@ class User(Base):
     posts:Mapped[list["Post"]]=relationship(
         back_populates="user",
         cascade="all,delete"
+    )
+
+    refresh_tokens:Mapped[list["RefreshToken"]]=relationship(
+        back_populates="user",
+        cascade="all,delete-orphan"
     )

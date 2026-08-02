@@ -6,6 +6,7 @@ from app.models.user import User
 from app.schemas.auth import SignupRequest,LoginRequest,TokenResponse
 from app.core.security import hash_password,verify_password,create_access_token
 from app.core.logging import logger
+from app.services.refresh_token_service import create_user_refresh_token
 
 #signup service
 def signup(db:Session,request:SignupRequest):
@@ -69,10 +70,18 @@ def login(db: Session, form_data: OAuth2PasswordRequestForm):
         {"sub": db_user.email}
     )
 
+    refresh_token = create_user_refresh_token(
+        db,
+        db_user
+    )
+
+    db.commit()
+
     logger.info(
         f"User logged in successfully :{db_user.email}"
     )
 
     return TokenResponse(
-        access_token=access_token
+        access_token=access_token,
+        refresh_token=refresh_token,
     )
