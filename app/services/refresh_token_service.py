@@ -80,19 +80,22 @@ def refresh_access_token(db:Session,refresh_token:str)->dict:
     #step 7:Load the associated user from the database
     user=db_token.user
 
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="User not found"
-        )
+    #step 8:Revoke old refresh token
+
+    db_token.revoked=True
+
+    #Step:9:- GEnerate new refresh token
+    new_refresh_token=create_user_refresh_token(db=db,user=user)
 
 
-    #step 8:Generate a new access token
+    #step 10:Generate new access token
     access_token=create_access_token({"sub":user.email})
+    #step :11:Commit the changes to the database
+    db.commit()
 
-    #step 9:Return response
-
-    return TokenResponse(
-        access_token=access_token,
-        refresh_token=refresh_token,
-    )
+    #step 12:Return the new access and refresh tokens
+    return {
+        "access_token":access_token,
+        "refresh_token":new_refresh_token,
+        
+    }
