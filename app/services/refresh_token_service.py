@@ -99,3 +99,32 @@ def refresh_access_token(db:Session,refresh_token:str)->dict:
         "refresh_token":new_refresh_token,
         
     }
+
+
+#----------------------------------------------------
+def logout(db:Session,refresh_token:str):
+    try:
+        decode_refresh_token(refresh_token)
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or expired refresh token"
+        )
+
+    token_hash=hash_refresh_token(refresh_token)
+
+    db_token=db.scalar(
+        select(RefreshToken).where(RefreshToken.token_hash==token_hash)
+    )
+
+    if not db_token:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Refresh token not found"
+        )
+
+    db_token.revoked=True
+    db.commit() 
+    return{
+        "message":"Logged out successfully"
+    }
