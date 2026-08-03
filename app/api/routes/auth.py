@@ -7,8 +7,8 @@ from app.services.auth_service import signup,login
 from app.schemas.user import UserResponse
 from app.services.refresh_token_service import refresh_access_token,logout,logout_all_devices
 from app.schemas.auth import RefreshTokenRequest,SignupRequest,LoginRequest,TokenResponse,LogoutRequest,LogoutAllRequest
-
-
+from fastapi import BackgroundTasks
+from app.tasks.email import send_welcome_email
 
 router=APIRouter(
     prefix="/auth",
@@ -16,8 +16,10 @@ router=APIRouter(
 )
 
 @router.post("/signup",response_model=UserResponse,status_code=status.HTTP_201_CREATED)
-def signup_user(user:SignupRequest,db:Session=Depends(get_db)):
-    return signup(db,user)
+def signup_user(user:SignupRequest,background_tasks: BackgroundTasks,db:Session=Depends(get_db)):
+    new_user=signup(db,user)
+    background_tasks.add_task(send_welcome_email,new_user.email)
+    return new_user
 
 
 @router.post("/login",response_model=TokenResponse)
