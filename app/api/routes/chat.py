@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends
-from app.ai.chat_service import chat
+from app.ai.chat_engine import chat
 from app.models.user import User
 from app.api.dependencies import get_current_user
 from app.schemas.chat import ChatRequest,ChatResponse
