@@ -2,26 +2,33 @@ from langchain_core.messages import HumanMessage,AIMessage
 
 from app.ai.llm import get_llm
 
-def chat(message:str)->str:
+def generate_response(history):
     """
     Generate an AI response from the conversation history.
     """
 
-    history=[]
+    print("inside generate_response")
+    llm=get_llm()
+    langchain_messages=[]
 
-    for message in messages:
+    for message in history:
+        print(message.role,":",message.content)
         if message.role=="user":
-            history.append(
+            langchain_messages.append(
                 HumanMessage(content=message.content)
             )
 
         else:
-            history.append(
+            langchain_messages.append(
                 AIMessage(
                     content=message.content
                 )
             )
 
-    response=llm.invoke(history)
+    print("Calling gemini...")
+
+    response=llm.invoke(langchain_messages)
+
+    print("Gemini replied:",response.content)
 
     return response.content
