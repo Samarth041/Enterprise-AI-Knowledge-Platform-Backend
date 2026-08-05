@@ -5,11 +5,14 @@ from app.api.routes.posts import router as post_router
 from app.api.routes.auth import router as auth_router
 from app.core.exceptions import http_exception_handler,global_exception_handler
 from fastapi import HTTPException,Request
-import time
 from app.core.logging import logger
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.scheduler import start_scheduler
 from app.api.routes.files import router as files_router
+from app.api.routes.chat import router as chat_router
+import time
+
+
 
 app=FastAPI(title=settings.APP_NAME )
 
@@ -58,3 +61,4 @@ app.include_router(user_router)
 app.include_router(post_router)
 app.include_router(auth_router)
 app.include_router(files_router)
+app.include_router(chat_router)

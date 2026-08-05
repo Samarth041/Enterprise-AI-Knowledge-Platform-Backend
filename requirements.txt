@@ -21,3 +21,16 @@ sqlalchemy
 alembic
 
 apscheduler
+slowapi
+
+
+langchain
+langgraph
+langchain-community
+langchain-google-genai
+langchain-huggingface
+chromadb
+sentence-transformers
+pypdf
+tiktoken
+sse-starlette
