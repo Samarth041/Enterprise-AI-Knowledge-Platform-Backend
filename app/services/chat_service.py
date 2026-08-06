@@ -1,10 +1,13 @@
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session,selectinload
 from app.models.chat_session import ChatSession
 from app.models.chat_message import ChatMessage
 from app.models.user import User
 from app.ai.chat_engine import generate_response
+from fastapi import HTTPException
 
-
+#------------------------------------------------------------
+#Session CRUD
+#-------------------------------------------------------------
 #create session
 def create_session(db:Session,user:User)->ChatSession:
 
@@ -14,8 +17,7 @@ def create_session(db:Session,user:User)->ChatSession:
     )
 
     db.add(session)
-    db.commit()
-    db.refresh(session)
+    db.flush() #generate session.id without committing
 
     return session
 
@@ -25,6 +27,7 @@ def create_session(db:Session,user:User)->ChatSession:
 def get_session(db:Session,session_id:int,user:User)->ChatSession | None:
     return(
         db.query(ChatSession)
+        .options(selectinload(ChatSession.messages))
         .filter(
             ChatSession.id==session_id,
             ChatSession.user_id==user.id
@@ -41,7 +44,7 @@ def save_message(db:Session,session:ChatSession,role:str,content:str):
     )
 
     db.add(message)
-    db.commit()
+   
 
     return message
 
@@ -56,59 +59,85 @@ def get_messages(db:Session,session:ChatSession):
         .all()
     )
 
+#get user sessions
+def get_user_sessions(db:Session,user:User):
+    return(
+        db.query(ChatSession)
+        .filter(ChatSession.user_id==user.id)
+        .order_by(ChatSession.updated_at.desc())
+        .all()
+    )
+
+#delete session
+
+def delete_session(db:Sesion,session:ChatSession):
+    db.delete(session)
+    db.commit()
+
+
 #process chat
+#Chat Orchestration
 
 def process_chat(db:Session,user:User,session_id:int | None,message:str):
     """
     Process a complete chat request
     """
+    try:
+        #get or create session
+        if session_id is None:
+            session=create_session(db,user)
 
-    if session_id is None:
-        session=create_session(db,user)
+        else:
+            session=get_session(db,session_id,user)
 
-    else:
-        session=get_session(db,session_id,user)
+            if session is None:
+                raise HTTPException(
+                    status_code=404,
+                    detail="Chat session not found"
+                )
 
-        if session is None:
-            raise HTTPException(
-                status_code=404,
-                detail="Chat Session not found"
-            )
+        #load previous history'
+        history=get_messages(
+            db=db,
+            session=session
+        )
 
-    #Save user message
+        #temporary current message
 
-    save_message(
-        db=db,
-        session=session,
-        role="user",
-        content=message
-    )
+        current_message=ChatMessage(
+            role="user",
+            content=message
+        )
 
-    #load full conversation
-    history=get_messages(
-        db=db,
-        session=session
-    )
+        history.append(current_message)
 
-    #generate AI response
+        #generate AI response
+        ai_response=generate_response(history)
 
-    ai_response=generate_response(history)
+        #save both message
+        save_message(
+            db=db,
+            session=session,
+            role="user",
+            content=message
+        )
 
-    #save assistant message
+        save_message(
+            db=db,
+            session=session,
+            role="assistant",
+            content=ai_response
+        )
 
-    save_message(
-        db=db,
-        session=session,
-        role="assistant",
-        content=ai_response
-    )
+        db.commit()
 
-    return session.id,ai_response
+        return session.id, ai_response
 
+    except Exception:
+        db.rollback()
+        raise
 
+        
 
-
-
-
-
-
+    
+    
