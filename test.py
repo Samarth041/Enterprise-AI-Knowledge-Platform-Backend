@@ -1,7 +1,7 @@
-from app.ai.llm import get_llm
+from app.ai.ingest import ingest_document
 
-llm = get_llm()
+count=ingest_document(
+    r"uploads\documents\AI Engineering.pdf"
+)
 
-response = llm.invoke("Say hello in one sentence.")
-
-print(response.content)
+print(count)

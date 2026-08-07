@@ -34,3 +34,6 @@ sentence-transformers
 pypdf
 tiktoken
 sse-starlette
+
+chromadb
+sentence-transformers
