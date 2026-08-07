@@ -32,3 +32,28 @@ def generate_response(history):
     print("Gemini replied:",response.content)
 
     return response.content
+
+
+#--------------------------------------------------------------
+def stream_response(history):
+    """
+    Stream AI response token by token
+    """
+
+    llm=get_llm()
+    langchain_messages=[]
+
+    for message in history:
+        if message.role=="user":
+            langchain_messages.append(
+                HumanMessage(content=message.content)
+            )
+
+        else:
+            langchain_messages.append(
+                AIMessage(content=message.content)
+            )
+
+    for chunk in llm.stream(langchain_messages):
+        if chunk.content:
+            yield chunk.content

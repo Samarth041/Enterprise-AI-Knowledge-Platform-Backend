@@ -2,7 +2,7 @@ from sqlalchemy.orm import Session,selectinload
 from app.models.chat_session import ChatSession
 from app.models.chat_message import ChatMessage
 from app.models.user import User
-from app.ai.chat_engine import generate_response
+from app.ai.chat_engine import generate_response,stream_response
 from fastapi import HTTPException
 
 #------------------------------------------------------------
@@ -75,6 +75,40 @@ def delete_session(db:Sesion,session:ChatSession):
     db.commit()
 
 
+
+#----------------------HELPERS-------------------------------------
+def _get_or_create_session(db:Session,user:User,session_id:int | None)->ChatSession:
+    if session_id is None:
+        return create_session(db,user)
+
+    session=get_session(
+        db,
+        session_id,
+        user
+    )
+
+    if session is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Chat session not found"
+        )
+
+    return session
+
+
+def _build_history(db:session,session:ChatSession,message:str):
+    history=get_messages(db,session)
+
+    history.append(
+        ChatMessage(
+            role="user",
+            content=message
+        )
+    )
+
+    return history
+
+#----------------------------------------------------------------------
 #process chat
 #Chat Orchestration
 
@@ -83,33 +117,17 @@ def process_chat(db:Session,user:User,session_id:int | None,message:str):
     Process a complete chat request
     """
     try:
-        #get or create session
-        if session_id is None:
-            session=create_session(db,user)
-
-        else:
-            session=get_session(db,session_id,user)
-
-            if session is None:
-                raise HTTPException(
-                    status_code=404,
-                    detail="Chat session not found"
-                )
-
-        #load previous history'
-        history=get_messages(
-            db=db,
-            session=session
+        session=_get_or_create_session(
+            db,
+            user,
+            session_id
         )
 
-        #temporary current message
-
-        current_message=ChatMessage(
-            role="user",
-            content=message
+        history=_build_history(
+            db,
+            session,
+            message
         )
-
-        history.append(current_message)
 
         #generate AI response
         ai_response=generate_response(history)
@@ -137,7 +155,63 @@ def process_chat(db:Session,user:User,session_id:int | None,message:str):
         db.rollback()
         raise
 
-        
 
+#------------------------------------------------------------------------------------------------
+
+
+#Chat (Streaming)
+
+#-----------------------------------------------------------------------------------------
+
+def process_chat_stream(
+    db:Session,
+    user:User,
+    message:str,
+    session_id=int | None,
     
-    
+):
+    session=_get_or_create_session(
+        db,
+        user,
+        session_id
+    )
+
+    history=_build_history(
+        db,
+        session,
+        message
+    )
+
+    generator=stream_response(history)
+
+    def response_generator():
+        full_response=""
+
+        try:
+            for chunk in generator:
+                full_response+=chunk
+
+                yield chunk
+
+            save_message(
+                db,
+                session,
+                "user",
+                message
+            )
+
+            save_message(
+                db,
+                session,
+                "assistant",
+                full_response
+
+            )
+
+            db.commit()
+
+        except Exception:
+            db.rollback()
+            raise
+
+    return session.id, response_generator()

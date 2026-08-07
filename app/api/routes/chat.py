@@ -7,6 +7,8 @@ from sqlalchemy.orm import Session
 from datetime import datetime
 from app.db.database import get_db
 from app.models.user import User
+from fastapi.responses import StreamingResponse
+from app.services.chat_service import process_chat_stream
 from app.services.chat_service import process_chat,get_user_sessions,get_session,delete_session
 
 
@@ -79,3 +81,26 @@ def remove_session(
     return{
         "message":"Conversation deleted successfully"
     }
+
+
+@router.post("/stream")
+def stream_chat(
+    request:ChatRequest,
+    db:Session=Depends(get_db),
+    current_user:User=Depends(get_current_user)
+):
+    session_id,generator=process_chat_stream(
+        db=db,
+        user=current_user,
+        session_id=request.session_id,
+        message=request.message
+    )
+
+    return StreamingResponse(
+        generator,
+        media_type="text/plain",
+        headers={
+            "X-Session-ID":str(session_id)
+        },
+
+    )
