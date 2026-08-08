@@ -1,5 +1,5 @@
 from langchain_core.messages import HumanMessage
-
+from pathlib import Path
 from app.ai.llm import get_llm
 from app.ai.vector_store import get_vector_store
 
@@ -73,5 +73,34 @@ def generate_rag_response(question:str,user_id:int):
         ]
     )
 
-    return response.content
     
+
+
+    #===========================================================
+    #build source information
+    #==============================================================
+
+
+    sources=[]
+
+    for document in documents:
+        metadata=document.metadata
+
+        source=metadata.get("source","")
+
+        filename=Path(source).name
+
+        sources.append(
+            {
+                "document_id":metadata.get("document_id"),
+                "filename":filename,
+                "page":metadata.get("page")
+
+            }
+        )
+
+
+    return {
+        "answer":response.content,
+        "sources":sources
+    }

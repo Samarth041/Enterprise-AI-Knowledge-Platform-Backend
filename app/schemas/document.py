@@ -2,7 +2,7 @@ from datetime import datetime
 from pydantic import BaseModel
 
 class DocumentUploadResponse(BaseModel):
-    document_id:str
+    document_id:int
     filename:str
     status:str
     chunks:int

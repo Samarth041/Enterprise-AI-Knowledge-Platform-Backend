@@ -38,6 +38,11 @@ def ingest_document(file_path:str,document_id:str,user_id:str):
     #Store in Chroma
     #=======================================
     vector_store=get_vector_store()
+    print("Number of PDF documents:", len(documents))
+    print("Number of chunks:", len(chunks))
 
+    if chunks:
+        print("First chunk:", chunks[0].page_content[:200])
+        print("First chunk metadata:", chunks[0].metadata)
     vector_store.add_documents(chunks)
     return len(chunks)

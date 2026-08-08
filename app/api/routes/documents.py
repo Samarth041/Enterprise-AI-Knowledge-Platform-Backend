@@ -5,6 +5,11 @@ from app.models.user import User
 from app.db.database import get_db
 from app.schemas.document import DocumentUploadResponse,DocumentResponse
 from app.services.document_service import upload_document,get_user_documents,delete_document
+from app.ai.rag import generate_rag_response
+
+from app.schemas.rag import RAGQueryRequest,RAGQueryResponse
+
+
 
 router=APIRouter(
     prefix="/documents",
@@ -73,3 +78,25 @@ def delete_document_endpoint(
     return{
         "message":"Document deleted successfully"
     }
+
+
+@router.post("/query",response_model=RAGQueryResponse)
+def query_documents(
+    request:RAGQueryRequest,
+    db:Session=Depends(get_db),
+    current_user:User=Depends(get_current_user)
+):
+
+    """
+    Aska question using the current user's documents.
+    """
+
+    result=generate_rag_response(
+        question=request.question,
+        user_id=current_user.id
+    )
+
+    return RAGQueryResponse(
+        answer=result["answer"],
+        sources=result["sources"]
+    )
