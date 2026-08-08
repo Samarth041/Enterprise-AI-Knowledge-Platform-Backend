@@ -169,14 +169,16 @@ def process_chat(db:Session,user:User,session_id:int | None,message:str):
 
         result=chat_graph.invoke(
             {
-                "messages":langchain_history
+                "messages":langchain_history,
+                "route": "",
+                "user_id": user.id,
             }
         )
 
         #generate AI response
         ai_response=result["messages"][-1].content
 
-        
+
 
         #save both message
         save_message(
