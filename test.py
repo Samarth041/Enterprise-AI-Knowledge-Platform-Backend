@@ -1,7 +1,14 @@
-from app.ai.ingest import ingest_document
+from langchain_core.messages import HumanMessage
 
-count=ingest_document(
-    r"uploads\documents\AI Engineering.pdf"
+from app.ai.chat_graph import chat_graph
+
+result=chat_graph.invoke(
+    {
+        "messages":[
+            HumanMessage(content="What is FastAPi?")
+        ]
+    }
 )
 
-print(count)
+
+print(result["messages"][-1].content)

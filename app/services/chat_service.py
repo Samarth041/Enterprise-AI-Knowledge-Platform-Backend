@@ -4,6 +4,9 @@ from app.models.chat_message import ChatMessage
 from app.models.user import User
 from app.ai.chat_engine import generate_response,stream_response
 from fastapi import HTTPException
+from app.ai.chat_graph import chat_graph
+from langchain_core.messages import HumanMessage, AIMessage
+
 
 #------------------------------------------------------------
 #Session CRUD
@@ -108,6 +111,27 @@ def _build_history(db:session,session:ChatSession,message:str):
 
     return history
 
+
+def _build_langchain_history(history):
+    """
+    Convert database ChatMessage objects
+    into langchain messages.
+    """
+
+    messages=[]
+
+    for message in history:
+        if message.role=='user':
+            messages.append(
+                HumanMessage(content=message.content)
+            )
+
+        elif message.role=="assistant":
+            messages.append(AIMessage(content=message.content))
+
+    return messages
+
+
 #----------------------------------------------------------------------
 #process chat
 #Chat Orchestration
@@ -123,14 +147,36 @@ def process_chat(db:Session,user:User,session_id:int | None,message:str):
             session_id
         )
 
+        #=======================================================
+        #load conversation history
+        #========================================================
+
+
         history=_build_history(
             db,
             session,
             message
         )
 
+
+        #==================================================
+        #Convert DB messages->langchain messages
+        #===============================================
+
+        langchain_history=_build_langchain_history(history)
+
+        #run langraph
+
+        result=chat_graph.invoke(
+            {
+                "messages":langchain_history
+            }
+        )
+
         #generate AI response
-        ai_response=generate_response(history)
+        ai_response=result["messages"][-1].content
+
+        
 
         #save both message
         save_message(
