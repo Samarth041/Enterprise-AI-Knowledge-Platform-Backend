@@ -1,10 +1,10 @@
-from fastapi import APIRouter, Depends, file, UploadFile
+from fastapi import APIRouter, Depends, File, UploadFile
 from sqlalchemy.orm import Session
 from app.api.dependencies import get_current_user
 from app.models.user import User
 from app.db.database import get_db
 from app.schemas.document import DocumentUploadResponse,DocumentResponse
-from app.services.document_servivce import upload_document,get_user_documents,delete_document
+from app.services.document_service import upload_document,get_user_documents,delete_document
 
 router=APIRouter(
     prefix="/documents",
@@ -54,7 +54,7 @@ def list_documents(
 #delete document
 #===================================================
 
-@route.delete("/{document_id}")
+@router.delete("/{document_id}")
 def delete_document_endpoint(
     document_id:int,
     db:Session=Depends(get_db),

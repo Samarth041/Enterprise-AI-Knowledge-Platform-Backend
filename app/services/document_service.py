@@ -7,6 +7,7 @@ import uuid
 from app.ai.ingest import ingest_document
 from app.models.document import Document
 from app.models.user import User
+from app.ai.vector_store import get_vector_store
 
 UPLOAD_DIR=Path("uploads/documents")
 UPLOAD_DIR.mkdir(
@@ -72,7 +73,10 @@ def upload_document(db:Session,user:User,file:UploadFile):
 
     try:
         chunk_count=ingest_document(
-            str(file_path)
+            file_path=str(file_path),
+            document_id=document.id,
+            user_id=user.id
+
         )
 
         document.status="indexed"
@@ -121,11 +125,21 @@ def get_user_documents(
 #Delete document
 #===============================================================
 
-def delete document(db:Session,user:User,document_id:int):
+def delete_document(
+    db:Session,
+    user:User,
+    document_id:int
+):
 
     """
-    Delete a document belonging to the current user
+    Delete a document belonging to the current user.
+    Removes:
+    1.Chroma DB
+    2.Local PDf
+    3.SQL database record
     """
+
+    #Find documents belonging to the current user
 
     document=(
         db.query(Document)
@@ -144,19 +158,32 @@ def delete document(db:Session,user:User,document_id:int):
         )
 
 
-    #delete local pdf
-    file_path=Path(document.file_path)
-
-    if file_path.exists():
-        file_path.unlink()
-
-    #delete database record
-    db.delete(document)
-    db.commit()
-    return True
+    try:
+        #=========================================
+        #delete vectors from Chroma DB
+        #==========================================
 
 
-    
+        vector_store=get_vector_store()
 
+        vector_store.delete(
+            where={
+                "document_id":document_id
+            }
+        )
 
+        #delete local pdf
 
+        file_path=Path(document.file_path)
+
+        if file_path.exists():
+            file_path.unlink()
+
+        #delete sql record
+
+        db.delete(document)
+        db.commit()
+
+    except Exception:
+        db.rollback()
+        raise

@@ -7,7 +7,7 @@ class DocumentUploadResponse(BaseModel):
     status:str
     chunks:int
 
-class DocumentResposne(BaseModel):
+class DocumentResponse(BaseModel):
     id:int
     filename:str
     status:str

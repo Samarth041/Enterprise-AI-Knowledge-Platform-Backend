@@ -9,7 +9,11 @@ text_splitter=RecursiveCharacterTextSplitter(
 )
 
 
-def ingest_document(file_path:str):
+def ingest_document(file_path:str,document_id:str,user_id:str):
+
+    """
+    Load a Pdf, split it into chunks, attach metadata,and store the chunks in ChromaDb
+    """
     loader=PyPDFLoader(file_path)
 
     documents=loader.load()
@@ -18,6 +22,21 @@ def ingest_document(file_path:str):
         documents
     )
 
+    #========================
+    #Add metadata
+    #=======================
+
+    for chunk in chunks:
+        chunk.metadata.update(
+            {
+                "document_id":document_id,
+                "user_id":user_id
+            }
+        )
+
+    #======================================
+    #Store in Chroma
+    #=======================================
     vector_store=get_vector_store()
 
     vector_store.add_documents(chunks)

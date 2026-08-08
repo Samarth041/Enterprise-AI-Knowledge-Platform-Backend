@@ -11,6 +11,7 @@ from app.core.scheduler import start_scheduler
 from app.api.routes.files import router as files_router
 from app.api.routes.chat import router as chat_router
 import time
+from app.api.routes.documents import router as doc_router
 
 
 
@@ -62,3 +63,4 @@ app.include_router(post_router)
 app.include_router(auth_router)
 app.include_router(files_router)
 app.include_router(chat_router)
+app.include_router(doc_router)
