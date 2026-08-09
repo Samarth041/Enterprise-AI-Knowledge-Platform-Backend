@@ -215,7 +215,7 @@ def process_chat_stream(
     db:Session,
     user:User,
     message:str,
-    session_id=int | None,
+    session_id:int | None,
     
 ):
     session=_get_or_create_session(
@@ -230,7 +230,7 @@ def process_chat_stream(
         message
     )
 
-    generator=stream_response(history)
+    generator=stream_response(history,user.id)
 
     def response_generator():
         full_response=""

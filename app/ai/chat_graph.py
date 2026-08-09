@@ -16,16 +16,15 @@ class ChatState(TypedDict):
 #================================
 
 
-def route_message(state:ChatState)->dict:
-    messages=state["messages"]
+def get_route(messages: list[BaseMessage]) -> str:
+    """Decide whether the request needs normal chat or RAG."""
 
-    #last user message
-    user_message=messages[-1].content
+    user_message = messages[-1].content
 
-    llm=get_llm()
+    llm = get_llm()
 
-    prompt=f""""
-    You are a router for an enterprise AI assistant.
+    prompt = f"""
+You are a router for an enterprise AI assistant.
 
 Decide whether the user's question should be answered using:
 
@@ -46,22 +45,26 @@ chat
 
 User question:
 {user_message}
-    """
+"""
 
-    response=llm.invoke(
+    response = llm.invoke(
         [HumanMessage(content=prompt)]
     )
 
-
-    route=response.content.strip().lower()
+    route = response.content.strip().lower()
 
     if "rag" in route:
-        return{
-            "route":"rag"
-        }
+        return "rag"
 
-    return{
-        "route":"chat"
+    return "chat"
+
+
+
+def route_message(state:ChatState)->dict:
+    route = get_route(state["messages"])
+
+    return {
+        "route": route
     }
 
 
