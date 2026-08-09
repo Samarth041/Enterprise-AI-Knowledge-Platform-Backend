@@ -6,7 +6,7 @@ from app.ai.chat_engine import generate_response,stream_response
 from fastapi import HTTPException
 from app.ai.chat_graph import chat_graph
 from langchain_core.messages import HumanMessage, AIMessage
-
+import json
 
 #------------------------------------------------------------
 #Session CRUD
@@ -239,7 +239,10 @@ def process_chat_stream(
             for chunk in generator:
                 full_response+=chunk
 
-                yield chunk
+                yield (
+                    f"event:token\n"
+                    f"data:{json.dumps({"content":chunk})}\n\n"
+                )
 
             save_message(
                 db,
@@ -258,8 +261,16 @@ def process_chat_stream(
 
             db.commit()
 
+            yield(
+                "event:done\n"
+                "data:{}\n\n"
+            )
+
         except Exception:
             db.rollback()
-            raise
+            yield(
+                "event: error\n"
+                f"data: {json.dumps({'message': 'AI generation failed'})}\n\n"
+            )
 
     return session.id, response_generator()

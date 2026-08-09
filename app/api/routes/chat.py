@@ -100,7 +100,9 @@ def stream_chat(
         generator,
         media_type="text/plain",
         headers={
-            "X-Session-ID":str(session_id)
+            "X-Session-ID":str(session_id),
+            "Cache-Control":"no-cache",
+            "Connection":"keep-alive"
         },
 
     )
