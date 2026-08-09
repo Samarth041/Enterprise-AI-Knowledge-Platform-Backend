@@ -7,6 +7,7 @@ import uuid
 from app.ai.ingest import ingest_document
 from app.models.document import Document
 from app.models.user import User
+from app.db.database import SessionLocal
 from app.ai.vector_store import get_vector_store
 
 UPLOAD_DIR=Path("uploads/documents")
@@ -67,39 +68,108 @@ def upload_document(db:Session,user:User,file:UploadFile):
     db.commit()
     db.refresh(document)
 
-    #===================================================================
-    #Ingest Document
-    #=====================================================================
+    return document
+
+#======================================================================
+#Background document ingestion
+#========================================================================
+def process_document_ingestion(document_id:int,file_path:str,user_id:int):
+    """
+    Process document ingestion in the background.
+
+    Flow:
+
+    PDF
+      ↓
+    PyPDFLoader
+      ↓
+    Chunking
+      ↓
+    Embeddings
+      ↓
+    ChromaDB
+    """
+
+    db=SessionLocal()
 
     try:
-        chunk_count=ingest_document(
-            file_path=str(file_path),
-            document_id=document.id,
-            user_id=user.id
+        #======================================================
+        #get document
+        #====================================================
 
+        document=(
+            db.query(Document)
+            .filter(
+                Document.id==document_id
+            )
+            .first()
         )
 
+        if document is None:
+            print(
+                f"Document {document_id} not found."
+            )
+            return 
+
+        #=================================================
+        #Ingest documents
+        #====================================
+
+        chunk_count=ingest_document(
+            file_path=file_path,
+            document_id=document_id,
+            user_id=user_id
+        )
+
+        #==========================================
+        #Mark as indexed
+        #================================================
+
         document.status="indexed"
-        db.commit()
-
-    except Exception:
-
-        document.status="failed"
 
         db.commit()
 
-        raise
+        print(
+            f"Document {document_id} indexed successfully"
+            f"Chunks {chunk_count}"
+        )
 
-    #===============================================
-    #response
-    #==========================================================
+    except Exception as exc:
+         # ======================================================
+        # Rollback failed transaction
+        # ======================================================
 
-    return{
-        "document_id":document.id,
-        "filename":document.filename,
-        "status":document.status,
-        "chunks":chunk_count
-    }
+        db.rollback()
+
+        # ======================================================
+        # Mark document as failed
+        # ======================================================
+
+        document = (
+            db.query(Document)
+            .filter(
+                Document.id == document_id
+            )
+            .first()
+        )
+
+        if document:
+
+            document.status = "failed"
+
+            db.commit()
+
+        print(
+            f"Document {document_id} ingestion failed: {exc}"
+        )
+
+    finally:
+
+        # ======================================================
+        # Always close background DB session
+        # ======================================================
+
+        db.close()
 
 
 #================================================================

@@ -1,10 +1,10 @@
-from fastapi import APIRouter, Depends, File, UploadFile
+from fastapi import APIRouter, Depends, File, UploadFile,BackgroundTasks,status
 from sqlalchemy.orm import Session
 from app.api.dependencies import get_current_user
 from app.models.user import User
 from app.db.database import get_db
 from app.schemas.document import DocumentUploadResponse,DocumentResponse
-from app.services.document_service import upload_document,get_user_documents,delete_document
+from app.services.document_service import upload_document,get_user_documents,delete_document,process_document_ingestion
 from app.ai.rag import generate_rag_response
 
 from app.schemas.rag import RAGQueryRequest,RAGQueryResponse
@@ -20,8 +20,9 @@ router=APIRouter(
 #Upload document
 #======================================================================
 
-@router.post("/upload",response_model=DocumentUploadResponse,status_code=201)
+@router.post("/upload",response_model=DocumentUploadResponse,status_code=status.HTTP_202_ACCEPTED)
 def upload_document_endpoint(
+    background_tasks:BackgroundTasks,
     file:UploadFile=File(...),
     db:Session=Depends(get_db),
     current_user:User=Depends(get_current_user)
@@ -30,11 +31,26 @@ def upload_document_endpoint(
     Upload and index a PDF document.
     """
 
-    return upload_document(
+    document=upload_document(
         db=db,
         user=current_user,
         file=file
     )
+
+    background_tasks.add_task(
+        process_document_ingestion,
+        document.id,
+        document.file_path,
+        current_user.id
+    )
+
+
+    return{
+        "document_id":document.id,
+        "filename":document.filename,
+        "status":document.status,
+        "chunks":0
+    }
 
 #========================================================
 #list User Documents
