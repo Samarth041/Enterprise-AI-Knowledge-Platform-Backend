@@ -1,7 +1,7 @@
 from typing import TypedDict,Literal
 from langchain_core.messages import BaseMessage,AIMessage, HumanMessage
 from langgraph.graph import StateGraph, START,END
-
+from app.ai.cache import get_cached_response, set_cached_response
 from app.ai.llm import get_llm
 from app.ai.vector_store import get_vector_store
 
@@ -78,18 +78,45 @@ def generate_response(state:ChatState):
     
     """
 
+    messages=state["messages"]
+    user_message=messages[-1].content
+    
+    user_id=state["user_id"]
+
+    cache_key=f"{user_id}:{user_message}"
+
+    #=================================================================
+    #Check Cache
+    #================================================================
+
+    cached_response=get_cached_response(cache_key)
+
+    if cached_response is not None:
+        print("Cache hit")
+
+        return{
+            "messages":[AIMessage(content=cached_response)]
+        }
+
+
+    #Cache miss-->call gemini
+
+    print("CACHE MISS")
+
     llm=get_llm()
 
-    response=llm.invoke(
-        state["messages"]
-    )
+    response=llm.invoke(messages)
+
+    #========================================================
+    #Store response
+    #=====================================================
+    set_cached_response(cache_key,response.content)
 
     return{
         "messages":[
             response
         ]
     }
-
 
 #======================================================
 #RAG
