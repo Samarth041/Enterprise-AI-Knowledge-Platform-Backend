@@ -3,6 +3,7 @@ from langchain_core.messages import BaseMessage,AIMessage, HumanMessage
 from langgraph.graph import StateGraph, START,END
 from app.ai.cache import get_cached_response, set_cached_response
 from app.ai.llm import get_llm
+from app.ai.monitoring import start_ai_request , log_ai_request
 from app.ai.vector_store import get_vector_store
 
 class ChatState(TypedDict):
@@ -85,6 +86,8 @@ def generate_response(state:ChatState):
 
     cache_key=f"{user_id}:{user_message}"
 
+    start_time=start_ai_request()
+
     #=================================================================
     #Check Cache
     #================================================================
@@ -94,29 +97,55 @@ def generate_response(state:ChatState):
     if cached_response is not None:
         print("Cache hit")
 
+        log_ai_request(
+            user_id=user_id,
+            route="chat",
+            start_time=start_time,
+            success=True
+        )
+
         return{
             "messages":[AIMessage(content=cached_response)]
         }
 
 
     #Cache miss-->call gemini
+    try:
 
-    print("CACHE MISS")
+        print("CACHE MISS")
 
-    llm=get_llm()
+        llm=get_llm()
 
-    response=llm.invoke(messages)
+        response=llm.invoke(messages)
+            
 
-    #========================================================
-    #Store response
-    #=====================================================
-    set_cached_response(cache_key,response.content)
+        #========================================================
+        #Store response
+        #=====================================================
+        set_cached_response(cache_key,response.content)
 
-    return{
-        "messages":[
-            response
-        ]
-    }
+        log_ai_request(
+            user_id=user_id,
+            route="chat",
+            start_time=start_time,
+            success=True
+        )
+
+        return{
+            "messages":[
+                response
+            ]
+        }
+
+    except Exception:
+        log_ai_request(
+            user_id=user_id,
+            route="chat",
+            start_time=start_time,
+            success=False
+        )
+
+        raise
 
 #======================================================
 #RAG
@@ -126,59 +155,90 @@ def generate_rag_response(state:ChatState)->dict:
     messages=state["messages"]
 
     question=messages[-1].content
+    user_id=state["user_id"]
 
-    vector_store=get_vector_store()
+    start_time=start_au_request()
 
-    documents=vector_store.similarity_search(
-        question,
-        k=5,
-        filter={
-            "user_id": state["user_id"],
-        },
-    )
+    try:
 
-    if not documents:
-        response=AIMessage(content=("I Could not find any relevant information in the documents"))
+        vector_store=get_vector_store()
+
+        documents=vector_store.similarity_search(
+            question,
+            k=5,
+            filter={
+                "user_id": state["user_id"],
+            },
+        )
+
+        if not documents:
+
+            log_ai_request(
+                user_id=user_id,
+                route="rag",
+                start_time=start_time,
+                success=True,
+                documents=0
+            )
+            response=AIMessage(content=("I Could not find any relevant information in the documents"))
+
+            return{
+                "messages":[response]
+            }
+
+        context="\n\n".join(
+            document.page_content for document in documents
+        )
+
+        prompt=f"""
+        You are an enterprise knowledge assistant.
+
+    Answer the user's question using ONLY
+    the provided document context.
+
+    Do not invent information.
+
+    If the answer cannot be found in the context,
+    say that the information is not available
+    in the uploaded documents.
+
+    DOCUMENT CONTEXT:
+
+    {context}
+
+    USER QUESTION:
+
+    {question}
+        """
+
+        llm=get_llm()
+
+        response=llm.invoke(
+            [HumanMessage(content=prompt)]
+        )
+
+        log_ai_request(
+            user_id=user_id,
+            route="rag",
+            start_time=start_time,
+            success=True,
+            documents=len(documents),
+        )
+
 
         return{
             "messages":[response]
         }
+    except Exception:
 
-    context="\n\n".join(
-        document.page_content for document in documents
-    )
+        log_ai_request(
+            user_id=user_id,
+            route="rag",
+            start_time=start_time,
+            success=False
+        )
 
-    prompt=f"""
-    You are an enterprise knowledge assistant.
-
-Answer the user's question using ONLY
-the provided document context.
-
-Do not invent information.
-
-If the answer cannot be found in the context,
-say that the information is not available
-in the uploaded documents.
-
-DOCUMENT CONTEXT:
-
-{context}
-
-USER QUESTION:
-
-{question}
-    """
-
-    llm=get_llm()
-
-    response=llm.invoke(
-        [HumanMessage(content=prompt)]
-    )
-
-    return{
-        "messages":[response]
-    }
-
+        raise
 
 #=====================================================
 #conditional Routing
