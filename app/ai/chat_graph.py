@@ -115,9 +115,7 @@ def generate_response(state:ChatState):
     try:
 
         print("CACHE MISS")
-        raise AIServiceError(
-            "AI service is temporarily unavailable."
-        )
+        
 
 
         llm=get_llm()

@@ -239,9 +239,13 @@ def process_chat_stream(
             for chunk in generator:
                 full_response+=chunk
 
+                payload = json.dumps({
+                    "content": chunk
+                })
+
                 yield (
-                    f"event:token\n"
-                    f"data:{json.dumps({"content":chunk})}\n\n"
+                    "event: token\n"
+                    f"data: {payload}\n\n"
                 )
 
             save_message(

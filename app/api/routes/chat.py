@@ -98,7 +98,7 @@ def stream_chat(
 
     return StreamingResponse(
         generator,
-        media_type="text/plain",
+        media_type="text/event-stream",
         headers={
             "X-Session-ID":str(session_id),
             "Cache-Control":"no-cache",
