@@ -1,6 +1,7 @@
 from fastapi import Request,HTTPException
 from fastapi.responses import JSONResponse
 from app.core.logging import logger
+from app.core.ai_exceptions import AIServiceError
 
 async def http_exception_handler(request:Request,exc:HTTPException):
 
@@ -27,5 +28,24 @@ async def global_exception_handler(request:Request,exc:Exception):
         content={
             "success":False,
             "message":"Internal Server Error"
+        }
+    )
+
+#================================================
+#AI Exception handler
+#=================================================
+
+async def ai_service_exception_handler(request:Request,exc:AIServiceError):
+    logger.error(
+        f"AI service error on "
+        f"{request.method} {request.url.path}: "
+        f"{exc}"
+    )
+
+    return JSONResponse(
+        status_code=503,
+        content={
+            "success":False,
+            "message":str(exc)
         }
     )

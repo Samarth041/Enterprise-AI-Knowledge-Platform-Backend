@@ -12,7 +12,8 @@ from app.api.routes.files import router as files_router
 from app.api.routes.chat import router as chat_router
 import time
 from app.api.routes.documents import router as doc_router
-
+from app.core.ai_exceptions import AIServiceError
+from app.core.exceptions import ai_service_exception_handler
 
 
 app=FastAPI(title=settings.APP_NAME )
@@ -25,6 +26,10 @@ def startup():
 app.add_exception_handler(HTTPException,http_exception_handler)
 
 app.add_exception_handler(Exception,global_exception_handler)
+app.add_exception_handler(
+    AIServiceError,
+    ai_service_exception_handler,
+)
 
 
 #Middleware

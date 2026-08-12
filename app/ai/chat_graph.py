@@ -5,6 +5,8 @@ from app.ai.cache import get_cached_response, set_cached_response
 from app.ai.llm import get_llm
 from app.ai.monitoring import start_ai_request , log_ai_request
 from app.ai.vector_store import get_vector_store
+from app.core.ai_exceptions import AIServiceError
+
 
 class ChatState(TypedDict):
     messages:list[BaseMessage]
@@ -113,6 +115,10 @@ def generate_response(state:ChatState):
     try:
 
         print("CACHE MISS")
+        raise AIServiceError(
+            "AI service is temporarily unavailable."
+        )
+
 
         llm=get_llm()
 
