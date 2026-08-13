@@ -37,3 +37,6 @@ sse-starlette
 
 chromadb
 sentence-transformers
+
+pytest
+httpx
