@@ -6,6 +6,7 @@ from app.models.refresh_token import RefreshToken
 from app.models.user import User
 from app.core.security import create_refresh_token, hash_refresh_token,decode_refresh_token,create_access_token
 from app.core.config import settings
+from fastapi import HTTPException, status
 from app.core.logging import logger
 
 
@@ -193,3 +194,7 @@ def cleanup_expired_refresh_tokens(db:Session):
     logger.info(
         f"Deleted {result.rowcount} expired/revoked refresh tokens"
     )
+
+
+#=================================================================
+

@@ -4,6 +4,7 @@ from passlib.context import CryptContext
 from app.core.config import settings
 from fastapi.security import OAuth2PasswordBearer
 import hashlib
+from uuid import uuid4
 
 
 ACCESS_TOKEN_TYPE = "access"
@@ -50,7 +51,8 @@ def create_refresh_token(data:dict)->str:
     to_encode.update(
         {
             "exp":expire,
-            "type": REFRESH_TOKEN_TYPE
+            "type": REFRESH_TOKEN_TYPE,
+            "jti":str(uuid4())
         }
     )
 
@@ -105,3 +107,4 @@ def hash_refresh_token(token:str)->str:
 #verify hashed refresh token
 def verify_refresh_token(refresh_token:str,stored_hash:str)->bool:
     return hash_refresh_token(refresh_token) == stored_hash
+
