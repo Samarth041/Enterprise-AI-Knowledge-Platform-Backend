@@ -73,7 +73,7 @@ def get_user_sessions(db:Session,user:User):
 
 #delete session
 
-def delete_session(db:Sesion,session:ChatSession):
+def delete_session(db:Session,session:ChatSession):
     db.delete(session)
     db.commit()
 
@@ -99,7 +99,7 @@ def _get_or_create_session(db:Session,user:User,session_id:int | None)->ChatSess
     return session
 
 
-def _build_history(db:session,session:ChatSession,message:str):
+def _build_history(db:Session,session:ChatSession,message:str):
     history=get_messages(db,session)
 
     history.append(

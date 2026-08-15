@@ -47,3 +47,41 @@ def client(db):
 
     app.dependency_overrides.clear()
 
+
+
+import uuid
+
+@pytest.fixture
+def auth_client(client):
+    email = f"chat_test_{uuid.uuid4().hex}@example.com"
+
+    signup_response = client.post(
+        "/auth/signup",
+        json={
+            "name": "Chat Test User",
+            "email": email,
+            "password": "Test@123",
+            "age": 21,
+            "phone": "9727846321",
+        },
+    )
+
+    assert signup_response.status_code in [200, 201]
+
+    login_response = client.post(
+        "/auth/login",
+        data={
+            "username": email,
+            "password": "Test@123",
+        },
+    )
+
+    assert login_response.status_code == 200
+
+    token = login_response.json()["access_token"]
+
+    client.headers.update({
+        "Authorization": f"Bearer {token}"
+    })
+
+    return client
