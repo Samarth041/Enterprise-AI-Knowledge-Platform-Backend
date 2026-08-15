@@ -1,34 +1,35 @@
 def test_signup(client):
-    response=client.post(
-        "auth/signup",
+    response = client.post(
+        "/auth/signup",
         json={
-            "name":"Test User",
-            "email":"pytest_user@example.com",
-            "password":"Test@123"
+            "name": "Test User",
+            "email": "pytest_user@example.com",
+            "password": "Test@123",
+            "age": 21,
+            "phone": "9876543210"
         }
     )
 
-    assert response.status_code in [200,201]
+    print(response.json())
 
+    assert response.status_code in [200, 201]
 
 #login---------------
-
 def test_login(client):
-    response=client.post(
+    response = client.post(
         "/auth/login",
         data={
-            "username":"pytest_user@example.com",
-            "password":"Test@123"
+            "username": "pytest_user@example.com",
+            "password": "Test@123"
         }
     )
 
-    assert response.status_code==200
+    assert response.status_code == 200
 
-    data=response.json()
+    data = response.json()
 
     assert "access_token" in data
     assert "refresh_token" in data
-
 
 #==============================================================
 
@@ -37,7 +38,7 @@ def test_login_invalid_password(client):
         "/auth/login",
         data={
             "username":"pytest_user@example.com",
-            "password":"Test@123"
+            "password":"Test@3"
         }
     )
     assert response.status_code==401

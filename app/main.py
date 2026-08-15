@@ -7,7 +7,7 @@ from app.core.exceptions import http_exception_handler,global_exception_handler
 from fastapi import HTTPException,Request
 from app.core.logging import logger
 from fastapi.middleware.cors import CORSMiddleware
-from app.core.scheduler import start_scheduler
+from app.core.scheduler import start_scheduler,stop_scheduler
 from app.api.routes.files import router as files_router
 from app.api.routes.chat import router as chat_router
 import time
@@ -20,8 +20,13 @@ app=FastAPI(title=settings.APP_NAME )
 
 
 @app.on_event("startup")
-def startup():
+async def startup():
     start_scheduler()
+
+@app.on_event("shutdown")
+async def shutdown():
+    stop_scheduler()
+
 
 app.add_exception_handler(HTTPException,http_exception_handler)
 

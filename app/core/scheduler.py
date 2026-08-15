@@ -12,9 +12,32 @@ def cleanup_job():
     try:
         cleanup_expired_refresh_tokens(db)
 
+    except Exception:
+        logger.exception("Error while cleaning up expired refresh tokens")
+
     finally:
         db.close()
 
 def start_scheduler():
-    scheduler.add_job(cleanup_job,trigger="cron", hour=2,minute=0) #run every day at 2:00 AM
+    if scheduler.running:
+        return
+
+    scheduler.add_job(
+        cleanup_job,
+        "interval",
+        minutes=5,
+        id="cleanup_job",
+        replace_existing=True
+    )
+
     scheduler.start()
+
+    logger.info("Background scheduler started")
+
+def stop_scheduler():
+    if not scheduler.running:
+        return
+
+    scheduler.shutdown(wait=False)
+
+    logger.info("Background scheduler stopped")                                       
