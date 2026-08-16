@@ -161,7 +161,7 @@ def generate_rag_response(state:ChatState)->dict:
     question=messages[-1].content
     user_id=state["user_id"]
 
-    start_time=start_au_request()
+    start_time=start_ai_request()
 
     try:
 
