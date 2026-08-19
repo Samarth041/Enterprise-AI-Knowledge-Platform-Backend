@@ -1,5 +1,7 @@
 from io import BytesIO
-from unittest.mock import patch
+from unittest.mock import patch, MagicMock
+from langchain_core.messages import AIMessage
+
 
 
 # ============================================================
@@ -180,3 +182,19 @@ def test_delete_nonexistent_document(auth_client):
     )
 
     assert response.status_code == 404
+
+#=================================================================
+#RAG Query Authetication 
+#===================================================================
+
+def test_rag_query_requires_authentication(client):
+    response=client.post(
+        "/documents/query",
+        json={
+            "question":"What is FastAPI?"
+        }
+    )
+
+    assert response.status_code in [401,403]
+
+#
