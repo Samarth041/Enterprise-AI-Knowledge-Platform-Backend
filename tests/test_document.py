@@ -197,4 +197,98 @@ def test_rag_query_requires_authentication(client):
 
     assert response.status_code in [401,403]
 
-#
+#===========================================================
+#RAG Query -with documents
+#===========================================================
+
+def test_raq_query_with_documents(auth_client):
+    fake_documents=[
+        MagicMock(
+            page_content=(
+                "FastAPI is a modern Python web framework "
+                "used for building APIs"
+            ),
+            metadata={
+                "document_id":1,
+                "source":"test.pdf"
+            },
+        )
+    ]
+
+    fake_vector_store=MagicMock()
+
+    fake_vector_store.similarity_search.return_value=(
+        fake_documents
+    )
+
+    fake_llm=MagicMock()
+
+    fake_llm.invoke.return_value=AIMessage(
+        content="FastAPI is a Python web framework"
+    )
+
+    with patch(
+        "app.ai.rag.get_vector_store",
+        return_value=fake_vector_store,
+    ), patch(
+        "app.ai.rag.get_llm",
+        return_value=fake_llm
+    ):
+        response=auth_client.post(
+            "/documents/query",
+            json={
+                "question":"What is FastAPI?"
+            }
+        )
+
+    assert response.status_code ==200
+
+    data=response.json()
+
+    assert "answer" in data
+    assert "sources" in data
+
+    assert data["answer"]==(
+        "FastAPI is a Python web framework"
+    )
+
+    assert isinstance(data["sources"],list)
+
+    fake_vector_store.similarity_search.assert_called_once()
+
+    fake_llm.invoke.assert_called_once()
+
+#==================================================================
+#RAG Query- No documents
+#===============================================================
+
+def test_rag_query_no_documents(auth_client):
+    fake_vector_store=MagicMock()
+
+    fake_vector_store.similarity_search.return_value=[]
+
+    fake_llm=MagicMock()
+
+    with patch(
+        "app.ai.rag.get_vector_store",
+        return_value=fake_vector_store,
+    ), patch(
+        "app.ai.rag.get_llm",
+        return_value=fake_llm
+    ):
+        response=auth_client.post(
+            "/documents/query",
+            json={
+                "question": "What information is available?"
+            }
+        )
+
+    assert response.status_code==200
+
+    data=response.json()
+
+    assert "answer" in data
+    assert "sources" in data
+
+    #llm shuld not be called when nothing was retrieved
+    fake_llm.invoke.assert_not_called()

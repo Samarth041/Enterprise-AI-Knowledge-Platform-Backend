@@ -28,7 +28,10 @@ def generate_rag_response(question:str,user_id:int):
 
 
     if not documents:
-        return "I could not find any relevant information in your documents"
+        return{
+            "answer":"I could not find any relevant information in your documents",
+            "sources": []
+        } 
 
     #====================================================================
     #Build Context
