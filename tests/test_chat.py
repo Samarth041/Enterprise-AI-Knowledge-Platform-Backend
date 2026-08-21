@@ -322,3 +322,41 @@ def test_user_cannot_access_another_users_session(client):
 
     # User A's session must not be visible to User B
     assert response.status_code == 404
+
+
+#=====================================================================
+#Streaming Chat
+#====================================================================
+
+
+def test_stream_chat(auth_client):
+    def fake_stream_response(history,user_id):
+        yield "Hello"
+        yield " from"
+        yield " AI"
+
+    with patch(
+        "app.services.chat_service.stream_response",
+        side_effect=fake_stream_response
+    ):
+        response=auth_client.post(
+            "/chat/stream",
+            json={
+                "session_id":None,
+                "message":"Hello"
+            }
+        )
+
+    assert response.status_code==200
+
+    assert response.headers["content-type"].startswith(
+        "text/event-stream"
+    )
+
+    assert "X-Session-ID" in response.headers
+
+    body=response.text
+
+    assert "event: token" in body
+    assert "Hello" in body
+    assert "event:done" in body
